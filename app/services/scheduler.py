@@ -10,8 +10,9 @@ def create_scheduler(job: Callable[[], Awaitable[None]]) -> AsyncIOScheduler:
     scheduler.add_job(
         job,
         trigger="interval",
-        seconds=settings.parse_schedule_minutes,
+        minutes=settings.parse_schedule_minutes,
         coalesce=True,
         max_instances=1,
+        misfire_grace_time=None
     )
     return scheduler

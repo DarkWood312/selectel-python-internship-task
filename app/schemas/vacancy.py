@@ -20,7 +20,14 @@ class VacancyCreate(VacancyBase):
 
 
 class VacancyUpdate(VacancyBase):
-    pass
+    title: Optional[str] = None
+    timetable_mode_name: Optional[str] = None
+    tag_name: Optional[str] = None
+    city_name: Optional[str] = None
+    published_at: Optional[datetime] = None
+    is_remote_available: Optional[bool] = None
+    is_hot: Optional[bool] = None
+    external_id: Optional[int] = None
 
 
 class VacancyRead(VacancyBase):

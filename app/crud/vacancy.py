@@ -47,7 +47,7 @@ async def create_vacancy(session: AsyncSession, data: VacancyCreate) -> Vacancy:
 async def update_vacancy(
     session: AsyncSession, vacancy: Vacancy, data: VacancyUpdate
 ) -> Vacancy:
-    for field, value in data.model_dump().items():
+    for field, value in data.model_dump(exclude_unset=True).items():
         setattr(vacancy, field, value)
     await session.commit()
     await session.refresh(vacancy)
@@ -63,22 +63,16 @@ async def upsert_external_vacancies(
     session: AsyncSession, payloads: Iterable[dict]
 ) -> int:
     external_ids = [payload["external_id"] for payload in payloads if payload["external_id"]]
-    if external_ids:
-        existing_result = await session.execute(
-            select(Vacancy.external_id).where(Vacancy.external_id.in_(external_ids))
-        )
-        existing_ids = set(existing_result.scalars().all())
-    else:
-        existing_ids = {}
+    existing_vacancies = await session.execute(
+        select(Vacancy).where(Vacancy.external_id.in_(external_ids))
+    )
+    existing_vacancies_dict = {v.external_id: v for v in set(existing_vacancies.scalars().all())}
 
     created_count = 0
     for payload in payloads:
         ext_id = payload["external_id"]
-        if ext_id and ext_id in existing_ids:
-            result = await session.execute(
-                select(Vacancy).where(Vacancy.external_id == ext_id)
-            )
-            vacancy = result.scalar_one()
+        if ext_id and ext_id in existing_vacancies_dict:
+            vacancy = existing_vacancies_dict[ext_id]
             for field, value in payload.items():
                 setattr(vacancy, field, value)
         else:
